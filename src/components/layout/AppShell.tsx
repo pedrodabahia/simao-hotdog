@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, ShoppingBag, Search, MapPin, Heart } from "lucide-react";
+import { useEffect } from "react";
 import { useStore, cartCount } from "@/lib/store";
 import { useAdmin, useCity, useStoreOpenStatus } from "@/lib/admin-store";
 
@@ -12,8 +13,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const count = cartCount(items);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const restaurantName = useAdmin((s) => s.restaurantName);
+  const hydrate = useAdmin((s) => s.hydrate);
   const city = useCity();
   const isOpen = useStoreOpenStatus();
+
+  useEffect(() => {
+    hydrate();
+    const onFocus = () => hydrate();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [hydrate]);
 
   const nav = [
     { to: "/", label: "Início", icon: Home },

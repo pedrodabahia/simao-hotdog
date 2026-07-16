@@ -50,10 +50,10 @@ function LoginGate() {
         <h1 className="mt-4 text-center font-display text-2xl font-bold">Painel do Administrador</h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">Acesso restrito. Digite sua senha.</p>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (locked) return;
-            if (login(pw)) {
+            if (await login(pw)) {
               toast.success("Bem-vindo, Simão!");
               setAttempts(0);
             } else {

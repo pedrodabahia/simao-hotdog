@@ -1,6 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "./supabase-client";
+import { adminLogin, adminSetPassword, saveStoreSettings } from "./admin-server";
 import {
   products as seedProducts,
   categories,
@@ -99,8 +101,10 @@ type AdminState = {
   saborOptions: string[];
   adminPassword: string;
   isAdmin: boolean;
+  hydrated: boolean;
 
-  login: (pw: string) => boolean;
+  hydrate: () => Promise<void>;
+  login: (pw: string) => Promise<boolean>;
   logout: () => void;
   setPassword: (pw: string) => void;
   upsertProduct: (p: Product) => void;
@@ -145,9 +149,245 @@ const DEFAULT_NEIGHBORHOODS: Neighborhood[] = NEIGHBORHOOD_NAMES.map((name) => (
   fee: 6.9,
 }));
 
-export const useAdmin = create<AdminState>()(
-  persist(
-    (set, get) => ({
+// Everything that lives in the shared `store_settings` row in Supabase.
+// isAdmin / adminPassword / hydrated are session-only client state and never
+// sent as-is (adminPassword is only ever used to authorize a write, checked
+// server-side against the separate, non-public admin_credentials table).
+type SettingsSnapshot = {
+  productOverrides: Record<string, Partial<Product>>;
+  extraProducts: Product[];
+  hiddenIds: string[];
+  promoOfDayId: string;
+  deliveryFee: number;
+  neighborhoods: Neighborhood[];
+  freeShippingEnabled: boolean;
+  freeShippingThreshold: number;
+  coupons: Coupon[];
+  whatsapp: string;
+  restaurantName: string;
+  restaurantAddress: string;
+  openingHours: DayHours[];
+  paoOptions: string[];
+  molhosOptions: string[];
+  removerOptions: string[];
+  adicionaisOptions: Adicional[];
+  tamanhoOptions: string[];
+  bordaOptions: string[];
+  saborOptions: string[];
+};
+
+function snapshotOf(s: AdminState): SettingsSnapshot {
+  return {
+    productOverrides: s.productOverrides,
+    extraProducts: s.extraProducts,
+    hiddenIds: s.hiddenIds,
+    promoOfDayId: s.promoOfDayId,
+    deliveryFee: s.deliveryFee,
+    neighborhoods: s.neighborhoods,
+    freeShippingEnabled: s.freeShippingEnabled,
+    freeShippingThreshold: s.freeShippingThreshold,
+    coupons: s.coupons,
+    whatsapp: s.whatsapp,
+    restaurantName: s.restaurantName,
+    restaurantAddress: s.restaurantAddress,
+    openingHours: s.openingHours,
+    paoOptions: s.paoOptions,
+    molhosOptions: s.molhosOptions,
+    removerOptions: s.removerOptions,
+    adicionaisOptions: s.adicionaisOptions,
+    tamanhoOptions: s.tamanhoOptions,
+    bordaOptions: s.bordaOptions,
+    saborOptions: s.saborOptions,
+  };
+}
+
+// Fire-and-forget push of the full settings snapshot to the server, which
+// re-checks the password against admin_credentials before writing.
+function pushSettings(get: () => AdminState) {
+  const s = get();
+  saveStoreSettings({ data: { password: s.adminPassword, settings: snapshotOf(s) } })
+    .then((res) => {
+      if (!res.ok) toast.error("Sessão expirada — faça login novamente para salvar.");
+    })
+    .catch(() => toast.error("Falha ao salvar no servidor. Verifique sua conexão."));
+}
+
+export const useAdmin = create<AdminState>()((set, get) => ({
+  productOverrides: {},
+  extraProducts: [],
+  hiddenIds: [],
+  promoOfDayId: "simao-bacon-lover",
+  deliveryFee: 6.9,
+  neighborhoods: DEFAULT_NEIGHBORHOODS,
+  freeShippingEnabled: true,
+  freeShippingThreshold: 80,
+  coupons: DEFAULT_COUPONS,
+  whatsapp: "557399831608",
+  restaurantName: "Hotdog do Simão",
+  restaurantAddress: "Rua das Salsichas, 123 · Centro, São Paulo - SP",
+  openingHours: DEFAULT_OPENING_HOURS,
+  paoOptions: [...PAO_OPTIONS],
+  molhosOptions: [...MOLHOS_OPTIONS],
+  removerOptions: [...REMOVER_OPTIONS],
+  adicionaisOptions: [...ADICIONAIS_OPTIONS],
+  tamanhoOptions: [...TAMANHO_PIZZA_OPTIONS],
+  bordaOptions: [...BORDA_PIZZA_OPTIONS],
+  saborOptions: [...SABOR_SUCO_OPTIONS],
+  adminPassword: "",
+  isAdmin: false,
+  hydrated: false,
+
+  hydrate: async () => {
+    const { data, error } = await supabase
+      .from("store_settings")
+      .select("data")
+      .eq("id", 1)
+      .single();
+    if (error || !data?.data) {
+      set({ hydrated: true });
+      return;
+    }
+    const remote = data.data as Partial<SettingsSnapshot>;
+    set((s) => ({
+      hydrated: true,
+      productOverrides: remote.productOverrides ?? s.productOverrides,
+      extraProducts: remote.extraProducts ?? s.extraProducts,
+      hiddenIds: remote.hiddenIds ?? s.hiddenIds,
+      promoOfDayId: remote.promoOfDayId ?? s.promoOfDayId,
+      deliveryFee: remote.deliveryFee ?? s.deliveryFee,
+      neighborhoods: remote.neighborhoods ?? s.neighborhoods,
+      freeShippingEnabled: remote.freeShippingEnabled ?? s.freeShippingEnabled,
+      freeShippingThreshold: remote.freeShippingThreshold ?? s.freeShippingThreshold,
+      coupons: remote.coupons ?? s.coupons,
+      whatsapp: remote.whatsapp ?? s.whatsapp,
+      restaurantName: remote.restaurantName ?? s.restaurantName,
+      restaurantAddress: remote.restaurantAddress ?? s.restaurantAddress,
+      openingHours: remote.openingHours ?? s.openingHours,
+      paoOptions: remote.paoOptions ?? s.paoOptions,
+      molhosOptions: remote.molhosOptions ?? s.molhosOptions,
+      removerOptions: remote.removerOptions ?? s.removerOptions,
+      adicionaisOptions: remote.adicionaisOptions ?? s.adicionaisOptions,
+      tamanhoOptions: remote.tamanhoOptions ?? s.tamanhoOptions,
+      bordaOptions: remote.bordaOptions ?? s.bordaOptions,
+      saborOptions: remote.saborOptions ?? s.saborOptions,
+    }));
+  },
+
+  login: async (pw) => {
+    const res = await adminLogin({ data: { password: pw } });
+    if (res.ok) set({ isAdmin: true, adminPassword: pw });
+    return res.ok;
+  },
+  logout: () => set({ isAdmin: false, adminPassword: "" }),
+  setPassword: (pw) => {
+    const current = get().adminPassword;
+    set({ adminPassword: pw });
+    adminSetPassword({ data: { currentPassword: current, newPassword: pw } })
+      .then((res) => {
+        if (!res.ok) {
+          set({ adminPassword: current });
+          toast.error("Não foi possível atualizar a senha.");
+        }
+      })
+      .catch(() => {
+        set({ adminPassword: current });
+        toast.error("Falha ao salvar no servidor. Verifique sua conexão.");
+      });
+  },
+  upsertProduct: (p) => {
+    const isSeed = seedProducts.some((s) => s.id === p.id);
+    if (isSeed) {
+      set((s) => ({
+        productOverrides: { ...s.productOverrides, [p.id]: p },
+        hiddenIds: s.hiddenIds.filter((x) => x !== p.id),
+      }));
+    } else {
+      set((s) => {
+        const exists = s.extraProducts.some((x) => x.id === p.id);
+        return {
+          extraProducts: exists
+            ? s.extraProducts.map((x) => (x.id === p.id ? p : x))
+            : [...s.extraProducts, p],
+        };
+      });
+    }
+    pushSettings(get);
+  },
+  deleteProduct: (id) => {
+    const isSeed = seedProducts.some((s) => s.id === id);
+    if (isSeed) {
+      set((s) => ({ hiddenIds: [...new Set([...s.hiddenIds, id])] }));
+    } else {
+      set((s) => ({ extraProducts: s.extraProducts.filter((x) => x.id !== id) }));
+    }
+    pushSettings(get);
+  },
+  toggleHidden: (id) => {
+    set((s) => ({
+      hiddenIds: s.hiddenIds.includes(id)
+        ? s.hiddenIds.filter((x) => x !== id)
+        : [...s.hiddenIds, id],
+    }));
+    pushSettings(get);
+  },
+  setPromoOfDay: (id) => {
+    set({ promoOfDayId: id });
+    pushSettings(get);
+  },
+  setDeliveryFee: (n) => {
+    set({ deliveryFee: n });
+    pushSettings(get);
+  },
+  setNeighborhoods: (list) => {
+    set({ neighborhoods: list });
+    pushSettings(get);
+  },
+  setFreeShipping: (enabled, threshold) => {
+    set({ freeShippingEnabled: enabled, freeShippingThreshold: threshold });
+    pushSettings(get);
+  },
+  setCoupons: (c) => {
+    set({ coupons: c });
+    pushSettings(get);
+  },
+  setContact: ({ whatsapp, name, address }) => {
+    set({ whatsapp, restaurantName: name, restaurantAddress: address });
+    pushSettings(get);
+  },
+  setOpeningHours: (hours) => {
+    set({ openingHours: hours });
+    pushSettings(get);
+  },
+  setPaoOptions: (list) => {
+    set({ paoOptions: list });
+    pushSettings(get);
+  },
+  setMolhosOptions: (list) => {
+    set({ molhosOptions: list });
+    pushSettings(get);
+  },
+  setRemoverOptions: (list) => {
+    set({ removerOptions: list });
+    pushSettings(get);
+  },
+  setAdicionaisOptions: (list) => {
+    set({ adicionaisOptions: list });
+    pushSettings(get);
+  },
+  setTamanhoOptions: (list) => {
+    set({ tamanhoOptions: list });
+    pushSettings(get);
+  },
+  setBordaOptions: (list) => {
+    set({ bordaOptions: list });
+    pushSettings(get);
+  },
+  setSaborOptions: (list) => {
+    set({ saborOptions: list });
+    pushSettings(get);
+  },
+  resetSeed: () => {
+    set({
       productOverrides: {},
       extraProducts: [],
       hiddenIds: [],
@@ -157,118 +397,10 @@ export const useAdmin = create<AdminState>()(
       freeShippingEnabled: true,
       freeShippingThreshold: 80,
       coupons: DEFAULT_COUPONS,
-      whatsapp: "557399831608",
-      restaurantName: "Hotdog do Simão",
-      restaurantAddress: "Rua das Salsichas, 123 · Centro, São Paulo - SP",
-      openingHours: DEFAULT_OPENING_HOURS,
-      paoOptions: [...PAO_OPTIONS],
-      molhosOptions: [...MOLHOS_OPTIONS],
-      removerOptions: [...REMOVER_OPTIONS],
-      adicionaisOptions: [...ADICIONAIS_OPTIONS],
-      tamanhoOptions: [...TAMANHO_PIZZA_OPTIONS],
-      bordaOptions: [...BORDA_PIZZA_OPTIONS],
-      saborOptions: [...SABOR_SUCO_OPTIONS],
-      adminPassword: "simao123",
-      isAdmin: false,
-
-      login: (pw) => {
-        if (pw === get().adminPassword) {
-          set({ isAdmin: true });
-          return true;
-        }
-        return false;
-      },
-      logout: () => set({ isAdmin: false }),
-      setPassword: (pw) => set({ adminPassword: pw }),
-      upsertProduct: (p) => {
-        const isSeed = seedProducts.some((s) => s.id === p.id);
-        if (isSeed) {
-          set((s) => ({
-            productOverrides: { ...s.productOverrides, [p.id]: p },
-            hiddenIds: s.hiddenIds.filter((x) => x !== p.id),
-          }));
-        } else {
-          set((s) => {
-            const exists = s.extraProducts.some((x) => x.id === p.id);
-            return {
-              extraProducts: exists
-                ? s.extraProducts.map((x) => (x.id === p.id ? p : x))
-                : [...s.extraProducts, p],
-            };
-          });
-        }
-      },
-      deleteProduct: (id) => {
-        const isSeed = seedProducts.some((s) => s.id === id);
-        if (isSeed) {
-          set((s) => ({ hiddenIds: [...new Set([...s.hiddenIds, id])] }));
-        } else {
-          set((s) => ({ extraProducts: s.extraProducts.filter((x) => x.id !== id) }));
-        }
-      },
-      toggleHidden: (id) =>
-        set((s) => ({
-          hiddenIds: s.hiddenIds.includes(id)
-            ? s.hiddenIds.filter((x) => x !== id)
-            : [...s.hiddenIds, id],
-        })),
-      setPromoOfDay: (id) => set({ promoOfDayId: id }),
-      setDeliveryFee: (n) => set({ deliveryFee: n }),
-      setNeighborhoods: (list) => set({ neighborhoods: list }),
-      setFreeShipping: (enabled, threshold) =>
-        set({ freeShippingEnabled: enabled, freeShippingThreshold: threshold }),
-      setCoupons: (c) => set({ coupons: c }),
-      setContact: ({ whatsapp, name, address }) =>
-        set({ whatsapp, restaurantName: name, restaurantAddress: address }),
-      setOpeningHours: (hours) => set({ openingHours: hours }),
-      setPaoOptions: (list) => set({ paoOptions: list }),
-      setMolhosOptions: (list) => set({ molhosOptions: list }),
-      setRemoverOptions: (list) => set({ removerOptions: list }),
-      setAdicionaisOptions: (list) => set({ adicionaisOptions: list }),
-      setTamanhoOptions: (list) => set({ tamanhoOptions: list }),
-      setBordaOptions: (list) => set({ bordaOptions: list }),
-      setSaborOptions: (list) => set({ saborOptions: list }),
-      resetSeed: () =>
-        set({
-          productOverrides: {},
-          extraProducts: [],
-          hiddenIds: [],
-          promoOfDayId: "simao-bacon-lover",
-          deliveryFee: 6.9,
-          neighborhoods: DEFAULT_NEIGHBORHOODS,
-          freeShippingEnabled: true,
-          freeShippingThreshold: 80,
-          coupons: DEFAULT_COUPONS,
-        }),
-    }),
-    {
-      name: "simao-admin",
-      partialize: (s) => ({
-        productOverrides: s.productOverrides,
-        extraProducts: s.extraProducts,
-        hiddenIds: s.hiddenIds,
-        promoOfDayId: s.promoOfDayId,
-        deliveryFee: s.deliveryFee,
-        neighborhoods: s.neighborhoods,
-        freeShippingEnabled: s.freeShippingEnabled,
-        freeShippingThreshold: s.freeShippingThreshold,
-        coupons: s.coupons,
-        whatsapp: s.whatsapp,
-        restaurantName: s.restaurantName,
-        restaurantAddress: s.restaurantAddress,
-        openingHours: s.openingHours,
-        paoOptions: s.paoOptions,
-        molhosOptions: s.molhosOptions,
-        removerOptions: s.removerOptions,
-        adicionaisOptions: s.adicionaisOptions,
-        tamanhoOptions: s.tamanhoOptions,
-        bordaOptions: s.bordaOptions,
-        saborOptions: s.saborOptions,
-        adminPassword: s.adminPassword,
-      }),
-    },
-  ),
-);
+    });
+    pushSettings(get);
+  },
+}));
 
 /* Selectors / helper hooks */
 
@@ -290,7 +422,8 @@ export function useProduct(id: string): Product | undefined {
 export function useProductsByCategory(slug: CategorySlug): Product[] {
   const list = useProducts();
   return useMemo(() => {
-    if (slug === "promocoes") return list.filter((p) => p.tag === "promocao" || p.category === "promocoes");
+    if (slug === "promocoes")
+      return list.filter((p) => p.tag === "promocao" || p.category === "promocoes");
     return list.filter((p) => p.category === slug);
   }, [list, slug]);
 }
