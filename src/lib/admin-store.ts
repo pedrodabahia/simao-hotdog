@@ -238,6 +238,10 @@ export const useAdmin = create<AdminState>()((set, get) => ({
   hydrated: false,
 
   hydrate: async () => {
+    if (!supabase) {
+      set({ hydrated: true });
+      return;
+    }
     const { data, error } = await supabase
       .from("store_settings")
       .select("data")
