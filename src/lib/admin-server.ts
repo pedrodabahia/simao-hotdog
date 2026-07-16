@@ -8,7 +8,16 @@ function adminClient() {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
-    throw new Error("Missing VITE_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY env vars");
+    // TEMPORARY diagnostics — never logs the secret itself, only whether
+    // it's visible and what runtime-identifying env keys are present.
+    const hasProcessEnv = typeof process !== "undefined" && !!process.env;
+    const relatedKeys = hasProcessEnv
+      ? Object.keys(process.env).filter((k) => /SUPABASE|VERCEL|CF_|NITRO|CLOUDFLARE/i.test(k))
+      : [];
+    throw new Error(
+      `Missing Supabase server env vars — url present: ${!!url}, serviceKey present: ${!!serviceKey}, ` +
+        `process.env available: ${hasProcessEnv}, related env keys seen: [${relatedKeys.join(", ")}]`,
+    );
   }
   return createClient(url, serviceKey, { auth: { persistSession: false } });
 }
