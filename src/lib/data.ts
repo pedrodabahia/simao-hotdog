@@ -235,7 +235,7 @@ export type CustomizationConfig = {
 export const CATEGORY_CUSTOMIZATION: Record<CategorySlug, CustomizationConfig> = {
   promocoes: { pao: true, salsicha: true, tamanho: false, borda: false, sabor: false, molhos: true, remover: true, adicionais: true },
   "hot-dogs": { pao: true, salsicha: true, tamanho: false, borda: false, sabor: false, molhos: true, remover: true, adicionais: true },
-  "mini-pizzas": { pao: false, salsicha: false, tamanho: true, borda: true, sabor: false, molhos: false, remover: true, adicionais: true },
+  "mini-pizzas": { pao: false, salsicha: false, tamanho: true, borda: true, sabor: false, molhos: false, remover: false, adicionais: false },
   bebidas: { pao: false, salsicha: false, tamanho: false, borda: false, sabor: false, molhos: false, remover: false, adicionais: false },
   sucos: { pao: false, salsicha: false, tamanho: false, borda: false, sabor: true, molhos: false, remover: false, adicionais: false },
 };

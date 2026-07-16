@@ -67,7 +67,11 @@ function ProductPage() {
 
   const fav = favorites.includes(p.id);
   const config = CATEGORY_CUSTOMIZATION[p.category];
-  const REMOVER_OPTIONS = p.ingredients;
+  // Pão e salsicha já têm seletor próprio acima — não fazem sentido como item "removível".
+  const REMOVER_OPTIONS = p.ingredients.filter((i) => {
+    const lower = i.toLowerCase();
+    return !((config.pao && lower.startsWith("pão")) || (config.salsicha && lower.startsWith("salsicha")));
+  });
 
   const toggleArr = <T extends string | { name: string; price: number }>(
     arr: T[],

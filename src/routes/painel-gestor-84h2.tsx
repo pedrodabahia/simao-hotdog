@@ -797,7 +797,7 @@ function AdicionaisCard() {
       <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold">
         <Sandwich className="h-5 w-5 text-brand-red" /> Adicionar ingredientes
       </h2>
-      <p className="mb-4 text-sm text-muted-foreground">Ingredientes extras que o cliente pode adicionar, com preço (Hot Dogs, Mini Pizzas e Promoções).</p>
+      <p className="mb-4 text-sm text-muted-foreground">Ingredientes extras que o cliente pode adicionar, com preço (Hot Dogs e Promoções).</p>
       <div className="space-y-2">
         {list.map((a, i) => (
           <div key={i} className="flex items-center gap-2">
