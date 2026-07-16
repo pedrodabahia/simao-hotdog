@@ -201,13 +201,6 @@ export const MOLHOS_OPTIONS = [
   "Barbecue",
   "Picante",
 ] as const;
-export const REMOVER_OPTIONS = [
-  "Sem cebola",
-  "Sem milho",
-  "Sem ervilha",
-  "Sem batata palha",
-  "Sem queijo",
-] as const;
 export const ADICIONAIS_OPTIONS: { name: string; price: number }[] = [
   { name: "Bacon", price: 4.9 },
   { name: "Cheddar", price: 3.9 },

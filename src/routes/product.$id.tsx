@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Heart, Clock, Flame, Minus, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
-import { SALSICHA_OPTIONS, CATEGORY_CUSTOMIZATION } from "@/lib/data";
+import { CATEGORY_CUSTOMIZATION } from "@/lib/data";
 import { useAdmin, useProduct } from "@/lib/admin-store";
 
 import { brl } from "@/lib/format";
@@ -32,8 +32,8 @@ function ProductPage() {
   const navigate = useNavigate();
   const { addItem, favorites, toggleFav } = useStore();
   const PAO_OPTIONS = useAdmin((s) => s.paoOptions);
+  const SALSICHA_OPTIONS = useAdmin((s) => s.salsichaOptions);
   const MOLHOS_OPTIONS = useAdmin((s) => s.molhosOptions);
-  const REMOVER_OPTIONS = useAdmin((s) => s.removerOptions);
   const ADICIONAIS_OPTIONS = useAdmin((s) => s.adicionaisOptions);
   const TAMANHO_OPTIONS = useAdmin((s) => s.tamanhoOptions);
   const BORDA_OPTIONS = useAdmin((s) => s.bordaOptions);
@@ -67,6 +67,7 @@ function ProductPage() {
 
   const fav = favorites.includes(p.id);
   const config = CATEGORY_CUSTOMIZATION[p.category];
+  const REMOVER_OPTIONS = p.ingredients;
 
   const toggleArr = <T extends string | { name: string; price: number }>(
     arr: T[],
@@ -275,7 +276,7 @@ function ProductPage() {
             </Section>
           )}
 
-          {config.remover && (
+          {config.remover && REMOVER_OPTIONS.length > 0 && (
             <Section title="Remover ingredientes">
               <div className="grid gap-2 sm:grid-cols-2">
                 {REMOVER_OPTIONS.map((r) => {

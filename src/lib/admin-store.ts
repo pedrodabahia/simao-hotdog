@@ -7,8 +7,8 @@ import {
   products as seedProducts,
   categories,
   PAO_OPTIONS,
+  SALSICHA_OPTIONS,
   MOLHOS_OPTIONS,
-  REMOVER_OPTIONS,
   ADICIONAIS_OPTIONS,
   TAMANHO_PIZZA_OPTIONS,
   BORDA_PIZZA_OPTIONS,
@@ -93,8 +93,8 @@ type AdminState = {
   restaurantAddress: string;
   openingHours: DayHours[];
   paoOptions: string[];
+  salsichaOptions: string[];
   molhosOptions: string[];
-  removerOptions: string[];
   adicionaisOptions: Adicional[];
   tamanhoOptions: string[];
   bordaOptions: string[];
@@ -118,8 +118,8 @@ type AdminState = {
   setContact: (data: { whatsapp: string; name: string; address: string }) => void;
   setOpeningHours: (hours: DayHours[]) => void;
   setPaoOptions: (list: string[]) => void;
+  setSalsichaOptions: (list: string[]) => void;
   setMolhosOptions: (list: string[]) => void;
-  setRemoverOptions: (list: string[]) => void;
   setAdicionaisOptions: (list: Adicional[]) => void;
   setTamanhoOptions: (list: string[]) => void;
   setBordaOptions: (list: string[]) => void;
@@ -168,8 +168,8 @@ type SettingsSnapshot = {
   restaurantAddress: string;
   openingHours: DayHours[];
   paoOptions: string[];
+  salsichaOptions: string[];
   molhosOptions: string[];
-  removerOptions: string[];
   adicionaisOptions: Adicional[];
   tamanhoOptions: string[];
   bordaOptions: string[];
@@ -192,8 +192,8 @@ function snapshotOf(s: AdminState): SettingsSnapshot {
     restaurantAddress: s.restaurantAddress,
     openingHours: s.openingHours,
     paoOptions: s.paoOptions,
+    salsichaOptions: s.salsichaOptions,
     molhosOptions: s.molhosOptions,
-    removerOptions: s.removerOptions,
     adicionaisOptions: s.adicionaisOptions,
     tamanhoOptions: s.tamanhoOptions,
     bordaOptions: s.bordaOptions,
@@ -227,8 +227,8 @@ export const useAdmin = create<AdminState>()((set, get) => ({
   restaurantAddress: "Rua das Salsichas, 123 · Centro, São Paulo - SP",
   openingHours: DEFAULT_OPENING_HOURS,
   paoOptions: [...PAO_OPTIONS],
+  salsichaOptions: [...SALSICHA_OPTIONS],
   molhosOptions: [...MOLHOS_OPTIONS],
-  removerOptions: [...REMOVER_OPTIONS],
   adicionaisOptions: [...ADICIONAIS_OPTIONS],
   tamanhoOptions: [...TAMANHO_PIZZA_OPTIONS],
   bordaOptions: [...BORDA_PIZZA_OPTIONS],
@@ -268,8 +268,8 @@ export const useAdmin = create<AdminState>()((set, get) => ({
       restaurantAddress: remote.restaurantAddress ?? s.restaurantAddress,
       openingHours: remote.openingHours ?? s.openingHours,
       paoOptions: remote.paoOptions ?? s.paoOptions,
+      salsichaOptions: remote.salsichaOptions ?? s.salsichaOptions,
       molhosOptions: remote.molhosOptions ?? s.molhosOptions,
-      removerOptions: remote.removerOptions ?? s.removerOptions,
       adicionaisOptions: remote.adicionaisOptions ?? s.adicionaisOptions,
       tamanhoOptions: remote.tamanhoOptions ?? s.tamanhoOptions,
       bordaOptions: remote.bordaOptions ?? s.bordaOptions,
@@ -366,12 +366,12 @@ export const useAdmin = create<AdminState>()((set, get) => ({
     set({ paoOptions: list });
     pushSettings(get);
   },
-  setMolhosOptions: (list) => {
-    set({ molhosOptions: list });
+  setSalsichaOptions: (list) => {
+    set({ salsichaOptions: list });
     pushSettings(get);
   },
-  setRemoverOptions: (list) => {
-    set({ removerOptions: list });
+  setMolhosOptions: (list) => {
+    set({ molhosOptions: list });
     pushSettings(get);
   },
   setAdicionaisOptions: (list) => {

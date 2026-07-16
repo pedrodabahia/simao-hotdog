@@ -698,13 +698,16 @@ function PersonalizationTab() {
         newPlaceholder="Ex: Molho rosé"
       />
       <StringListCard
-        title="Remover ingredientes"
-        subtitle="Itens que o cliente pode pedir para tirar (Hot Dogs, Mini Pizzas e Promoções)."
+        title="Salsicha"
+        subtitle="Tipos de salsicha que o cliente pode escolher no produto (Hot Dogs e Promoções)."
         icon={Sandwich}
-        items={useAdmin((s) => s.removerOptions)}
-        onSave={useAdmin((s) => s.setRemoverOptions)}
-        newPlaceholder="Ex: Sem picles"
+        items={useAdmin((s) => s.salsichaOptions)}
+        onSave={useAdmin((s) => s.setSalsichaOptions)}
+        newPlaceholder="Ex: Suína"
       />
+      <div className="rounded-2xl bg-brand-cream p-3 text-xs text-brand-brown">
+        <span className="font-semibold">Remover ingredientes:</span> agora é automático — a lista de itens que o cliente pode pedir para tirar é montada com base nos ingredientes já cadastrados em cada produto (aba Produtos). Não precisa configurar aqui.
+      </div>
       <AdicionaisCard />
     </div>
   );
