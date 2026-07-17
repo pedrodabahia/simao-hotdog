@@ -32,7 +32,7 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="truncate font-display text-base font-semibold">{product.name}</h3>
+            <h3 className="min-w-0 truncate font-display text-base font-semibold">{product.name}</h3>
             {product.tag && (
               <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", tagStyles[product.tag])}>
                 {tagLabels[product.tag]}
