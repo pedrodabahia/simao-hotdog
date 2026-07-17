@@ -70,7 +70,7 @@ function ProductPage() {
   // Pão e salsicha já têm seletor próprio acima — não fazem sentido como item "removível".
   const REMOVER_OPTIONS = p.ingredients.filter((i) => {
     const lower = i.toLowerCase();
-    return !((config.pao && lower.startsWith("pão")) || (config.salsicha && lower.startsWith("salsicha")));
+    return !((config.pao && lower.includes("pão")) || (config.salsicha && lower.includes("salsicha")));
   });
 
   const toggleArr = <T extends string | { name: string; price: number }>(

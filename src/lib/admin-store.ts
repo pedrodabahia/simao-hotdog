@@ -91,6 +91,7 @@ type AdminState = {
   whatsapp: string;
   restaurantName: string;
   restaurantAddress: string;
+  pixKey: string;
   openingHours: DayHours[];
   paoOptions: string[];
   salsichaOptions: string[];
@@ -116,6 +117,7 @@ type AdminState = {
   setFreeShipping: (enabled: boolean, threshold: number) => void;
   setCoupons: (c: Coupon[]) => void;
   setContact: (data: { whatsapp: string; name: string; address: string }) => void;
+  setPixKey: (key: string) => void;
   setOpeningHours: (hours: DayHours[]) => void;
   setPaoOptions: (list: string[]) => void;
   setSalsichaOptions: (list: string[]) => void;
@@ -166,6 +168,7 @@ type SettingsSnapshot = {
   whatsapp: string;
   restaurantName: string;
   restaurantAddress: string;
+  pixKey: string;
   openingHours: DayHours[];
   paoOptions: string[];
   salsichaOptions: string[];
@@ -190,6 +193,7 @@ function snapshotOf(s: AdminState): SettingsSnapshot {
     whatsapp: s.whatsapp,
     restaurantName: s.restaurantName,
     restaurantAddress: s.restaurantAddress,
+    pixKey: s.pixKey,
     openingHours: s.openingHours,
     paoOptions: s.paoOptions,
     salsichaOptions: s.salsichaOptions,
@@ -225,6 +229,7 @@ export const useAdmin = create<AdminState>()((set, get) => ({
   whatsapp: "557399831608",
   restaurantName: "Hotdog do Simão",
   restaurantAddress: "Rua das Salsichas, 123 · Centro, São Paulo - SP",
+  pixKey: "",
   openingHours: DEFAULT_OPENING_HOURS,
   paoOptions: [...PAO_OPTIONS],
   salsichaOptions: [...SALSICHA_OPTIONS],
@@ -266,6 +271,7 @@ export const useAdmin = create<AdminState>()((set, get) => ({
       whatsapp: remote.whatsapp ?? s.whatsapp,
       restaurantName: remote.restaurantName ?? s.restaurantName,
       restaurantAddress: remote.restaurantAddress ?? s.restaurantAddress,
+      pixKey: remote.pixKey ?? s.pixKey,
       openingHours: remote.openingHours ?? s.openingHours,
       paoOptions: remote.paoOptions ?? s.paoOptions,
       salsichaOptions: remote.salsichaOptions ?? s.salsichaOptions,
@@ -356,6 +362,10 @@ export const useAdmin = create<AdminState>()((set, get) => ({
   },
   setContact: ({ whatsapp, name, address }) => {
     set({ whatsapp, restaurantName: name, restaurantAddress: address });
+    pushSettings(get);
+  },
+  setPixKey: (key) => {
+    set({ pixKey: key });
     pushSettings(get);
   },
   setOpeningHours: (hours) => {

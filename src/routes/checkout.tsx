@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Check, MapPin, CreditCard, Wallet, QrCode, Home, MessageCircle } from "lucide-react";
+import { ArrowLeft, Check, MapPin, CreditCard, Wallet, QrCode, Home, MessageCircle, Copy } from "lucide-react";
 import { useStore, cartSubtotal, itemUnitPrice } from "@/lib/store";
 import { useAdmin, deliveryFeeForNeighborhood } from "@/lib/admin-store";
 import { brl } from "@/lib/format";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/checkout")({
   component: Checkout,
@@ -23,6 +24,7 @@ function Checkout() {
   const { items, coupon, placeOrder } = useStore();
   const whatsapp = useAdmin((s) => s.whatsapp);
   const restaurantName = useAdmin((s) => s.restaurantName);
+  const pixKey = useAdmin((s) => s.pixKey);
   const deliveryFee = useAdmin((s) => s.deliveryFee);
   const neighborhoods = useAdmin((s) => s.neighborhoods);
   const freeEnabled = useAdmin((s) => s.freeShippingEnabled);
@@ -277,6 +279,27 @@ function Checkout() {
               <div className="mt-3">
                 <Label className="mb-1 block text-xs text-white/80">Troco para</Label>
                 <Input value={troco} onChange={(e) => setTroco(e.target.value)} placeholder="Ex: 100" className="rounded-xl border-0 bg-white text-foreground" />
+              </div>
+            )}
+            {pagamento === "pix" && pixKey && (
+              <div className="mt-3 rounded-2xl bg-white p-4 text-brand-brown">
+                <p className="text-xs font-semibold text-muted-foreground">Chave Pix de {restaurantName}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="flex-1 truncate font-mono text-sm">{pixKey}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(pixKey);
+                      toast.success("Chave Pix copiada!");
+                    }}
+                    className="flex shrink-0 items-center gap-1 rounded-full bg-brand-red px-3 py-1.5 text-xs font-bold text-white"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copiar
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Pague agora pelo app do seu banco e envie o comprovante junto com o pedido no WhatsApp.
+                </p>
               </div>
             )}
           </div>

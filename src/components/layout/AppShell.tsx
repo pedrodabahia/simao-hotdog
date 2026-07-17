@@ -14,6 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const restaurantName = useAdmin((s) => s.restaurantName);
   const hydrate = useAdmin((s) => s.hydrate);
+  const hydrated = useAdmin((s) => s.hydrated);
   const city = useCity();
   const isOpen = useStoreOpenStatus();
 
@@ -23,6 +24,17 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [hydrate]);
+
+  if (!hydrated) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-brand-cream">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/logo.jpg" alt={restaurantName} className="h-16 w-16 rounded-2xl object-cover shadow-md" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-yellow border-t-brand-red" />
+        </div>
+      </div>
+    );
+  }
 
   const nav = [
     { to: "/", label: "Início", icon: Home },

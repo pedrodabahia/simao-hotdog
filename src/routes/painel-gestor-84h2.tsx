@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Lock, LogOut, Package, Tag, Truck, Settings as SettingsIcon,
-  Plus, Trash2, Eye, EyeOff, Star, Save, ArrowLeft, ImageIcon, Clock, Sandwich,
+  Plus, Trash2, Eye, EyeOff, Star, Save, ArrowLeft, ImageIcon, Clock, Sandwich, QrCode,
 } from "lucide-react";
 import { useAdmin, useProducts, type Coupon, type DayHours, type Adicional, type Neighborhood } from "@/lib/admin-store";
 import { categories, CATEGORY_CUSTOMIZATION, type Product, type CategorySlug, type Tag as ProductTag } from "@/lib/data";
@@ -845,14 +845,17 @@ function SettingsTab() {
   const whatsapp = useAdmin((s) => s.whatsapp);
   const restaurantName = useAdmin((s) => s.restaurantName);
   const restaurantAddress = useAdmin((s) => s.restaurantAddress);
+  const pixKey = useAdmin((s) => s.pixKey);
   const adminPassword = useAdmin((s) => s.adminPassword);
   const setContact = useAdmin((s) => s.setContact);
+  const setPixKey = useAdmin((s) => s.setPixKey);
   const setPassword = useAdmin((s) => s.setPassword);
   const resetSeed = useAdmin((s) => s.resetSeed);
 
   const [wa, setWa] = useState(whatsapp);
   const [name, setName] = useState(restaurantName);
   const [addr, setAddr] = useState(restaurantAddress);
+  const [pix, setPix] = useState(pixKey);
   const [pw, setPw] = useState(adminPassword);
 
   return (
@@ -881,6 +884,27 @@ function SettingsTab() {
             className="flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-brand-red font-bold text-white"
           >
             <Save className="h-4 w-4" /> Salvar dados
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-3xl bg-card p-5 card-shadow">
+        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
+          <QrCode className="h-5 w-5 text-brand-red" /> Chave Pix
+        </h2>
+        <div className="space-y-3">
+          <div>
+            <Label className="mb-1 block text-xs">Chave (CPF, CNPJ, e-mail, telefone ou aleatória)</Label>
+            <Input value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Ex: 11999999999" className="font-mono" />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Exibida ao cliente na hora de pagar, quando ele escolher Pix no checkout. Deixe em branco para não mostrar.
+            </p>
+          </div>
+          <button
+            onClick={() => { setPixKey(pix.trim()); toast.success("Chave Pix salva"); }}
+            className="flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-brand-red font-bold text-white"
+          >
+            <Save className="h-4 w-4" /> Salvar chave Pix
           </button>
         </div>
       </div>
