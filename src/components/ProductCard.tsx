@@ -25,7 +25,7 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
       <Link
         to="/product/$id"
         params={{ id: product.id }}
-        className="group flex gap-3 rounded-2xl bg-card p-3 card-shadow transition hover:-translate-y-0.5"
+        className="group flex min-w-0 gap-3 rounded-2xl bg-card p-3 card-shadow transition hover:-translate-y-0.5"
       >
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
           <img src={product.image} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
